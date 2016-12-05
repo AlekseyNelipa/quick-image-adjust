@@ -70,33 +70,43 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     private fun buildColorMap(): IntArray {
         val valueMap = IntArray(256)
         val controlPoints = getControlPoints(_points)
-        var xLast = 0
+        var xInt = 0
+        var x0 = 0.0
+        var y0 = _points[0].y.toDouble()
 
         for (i in 1.._points.size - 1) {
             val fx = { t: Double ->
                 (_points[i].x * t * t * t
-                +3 * controlPoints[i * 2 - 1].x * t * t * (1 - t)
-                +3 * controlPoints[i * 2 - 2].x * t * (1 - t) * (1 - t)
-                +_points[i - 1].x * (1 - t) * (1 - t) * (1 - t))
+                        + 3 * controlPoints[i * 2 - 1].x * t * t * (1 - t)
+                        + 3 * controlPoints[i * 2 - 2].x * t * (1 - t) * (1 - t)
+                        + _points[i - 1].x * (1 - t) * (1 - t) * (1 - t))
             }
             val fy = { t: Double ->
                 (_points[i].y * t * t * t
-                +3 * controlPoints[i * 2 - 1].y * t * t * (1 - t)
-                +3 * controlPoints[i * 2 - 2].y * t * (1 - t) * (1 - t)
-                +_points[i - 1].y * (1 - t) * (1 - t) * (1 - t))
+                        + 3 * controlPoints[i * 2 - 1].y * t * t * (1 - t)
+                        + 3 * controlPoints[i * 2 - 2].y * t * (1 - t) * (1 - t)
+                        + _points[i - 1].y * (1 - t) * (1 - t) * (1 - t))
             }
 
-            for (tt in 0..20) {
-                val t = tt / 20.0
-
-                val x = fx(t) * 255.0 / 1000.0
-                val y = fy(t) * 255.0 / 1000.0
+            val numSteps = Math.max(5, (50 * (_points[i].x - _points[i - 1].x) / 1000).toInt())
 
 
-                while (xLast <= x.toInt()) {
-                    valueMap[xLast] = 255 - y.toInt()
-                    xLast++
+
+            for (tt in 0..numSteps) {
+                val t = tt / numSteps.toDouble()
+
+                val x = fx(t) * 255 / 1000
+                val y = fy(t) * 255 / 1000
+
+                while (xInt <= x.toInt()) {
+                    if (x == x0)
+                        valueMap[xInt] = 255 - y0.toInt().restrict(0, 255)
+                    else
+                        valueMap[xInt] = 255 - (y0 + (y - y0) * (xInt - x0) / (x - x0)).toInt().restrict(0, 255)
+                    xInt++
                 }
+                x0 = x
+                y0 = y
 
             }
         }
@@ -164,10 +174,10 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
                     val currentPoint = _points[_selectedIndex]
                     currentPoint.x = when (_selectedIndex) {
                         0 -> 0F
-                        _points.size-1 -> 1000F
-                        else -> Math.max(0F, Math.min(1000F, x))
+                        _points.size - 1 -> 1000F
+                        else -> x.restrict(0F, 1000F)
                     }
-                    currentPoint.y = Math.max(0F, Math.min(1000F, y))
+                    currentPoint.y = y.restrict(0F, 1000F)
                     invalidate()
                 }
             }
@@ -236,10 +246,22 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         val v1 = VectorD(p1, p0)
         val v2 = VectorD(p1, p2)
         val vp = (v1.normalize() + v2.normalize()).onePerpendicular().normalize()
-        //val vp1 = vp * v1.dot(vp) / _k
-        //val vp2 = vp * v2.dot(vp) / _k
-        val vp1 = vp * VectorD(v1.x, 0.0).dot(vp) / _k
-        val vp2 = vp * VectorD(v2.x, 0.0).dot(vp) / _k
+        val vp1 = vp * (v1.x * vp.x / _k)
+        val vp2 = vp * (v2.x * vp.x / _k)
         return Pair(p1 + vp1, p1 + vp2)
     }
+
+}
+
+fun Int.restrict(min: Int, max: Int): Int = when {
+    this < min -> min
+    this > max -> max
+    else -> this
+}
+
+
+fun Float.restrict(min: Float, max: Float): Float = when {
+    this < min -> min
+    this > max -> max
+    else -> this
 }
