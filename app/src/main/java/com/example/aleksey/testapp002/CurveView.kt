@@ -79,35 +79,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     private fun buildColorMap(): IntArray {
         val valueMap = IntArray(256)
         val controlPoints = getControlPoints(_points)
-
-
-        val curvePoints = ArrayList<VectorD>()
-
-        for (i in 1.._points.size - 1) {
-            val fx = { t: Double ->
-                (_points[i].x * t * t * t
-                        + 3 * controlPoints[i * 2 - 1].x * t * t * (1 - t)
-                        + 3 * controlPoints[i * 2 - 2].x * t * (1 - t) * (1 - t)
-                        + _points[i - 1].x * (1 - t) * (1 - t) * (1 - t))
-            }
-            val fy = { t: Double ->
-                (_points[i].y * t * t * t
-                        + 3 * controlPoints[i * 2 - 1].y * t * t * (1 - t)
-                        + 3 * controlPoints[i * 2 - 2].y * t * (1 - t) * (1 - t)
-                        + _points[i - 1].y * (1 - t) * (1 - t) * (1 - t))
-            }
-
-            val numSteps = Math.max(5, (50 * (_points[i].x - _points[i - 1].x) / 1000).toInt())
-
-            for (tt in 0..numSteps) {
-                val t = tt / numSteps.toDouble()
-
-                val x = fx(t)
-                val y = fy(t)
-
-                curvePoints.add(VectorD(x, y))
-            }
-        }
+        val curvePoints = getCurvePoints(_points, controlPoints)
 
         var xInt = 0
         for(i in 1..curvePoints.size-1) {
@@ -125,6 +97,37 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         return valueMap
     }
 
+    private fun getCurvePoints(points: Array<VectorD>, controlPoints: List<VectorD>): ArrayList<VectorD> {
+        val curvePoints = ArrayList<VectorD>()
+
+        for (i in 1..points.size - 1) {
+            val fx = { t: Double ->
+                (points[i].x * t * t * t
+                        + 3 * controlPoints[i * 2 - 1].x * t * t * (1 - t)
+                        + 3 * controlPoints[i * 2 - 2].x * t * (1 - t) * (1 - t)
+                        + points[i - 1].x * (1 - t) * (1 - t) * (1 - t))
+            }
+            val fy = { t: Double ->
+                (points[i].y * t * t * t
+                        + 3 * controlPoints[i * 2 - 1].y * t * t * (1 - t)
+                        + 3 * controlPoints[i * 2 - 2].y * t * (1 - t) * (1 - t)
+                        + points[i - 1].y * (1 - t) * (1 - t) * (1 - t))
+            }
+
+            val numSteps = Math.max(5, (50 * (points[i].x - points[i - 1].x) / 1000).toInt())
+
+            for (tt in 0..numSteps) {
+                val t = tt / numSteps.toDouble()
+
+                val x = fx(t).restrict(0.0, 1000.0)
+                val y = fy(t).restrict(0.0, 1000.0)
+
+                curvePoints.add(VectorD(x, y))
+            }
+        }
+        return curvePoints
+    }
+
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
@@ -140,7 +143,8 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         canvas.scale(_scale!!, _scale!!)
 
         val controlPoints = getControlPoints(_points)
-        val path = createPath(_points, controlPoints)
+        val curvePoints = getCurvePoints(_points, controlPoints)
+        val path = createPath(curvePoints)
 
         canvas.drawPath(path, _paint)
         for (point in _points) {
@@ -206,15 +210,12 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     }
 
 
-    private fun createPath(points: Array<VectorD>, controlPoints: List<VectorD>): Path {
+    private fun createPath(curvePoints: List<VectorD>): Path {
         val path = Path()
 
-        path.moveTo(points[0].x.toFloat(), points[0].y.toFloat())
-        for (i in 1..points.size - 1) {
-            val cp0 = controlPoints[i * 2 - 2]
-            val cp1 = controlPoints[i * 2 - 1]
-            val p = points[i]
-            path.cubicTo(cp0.x.toFloat(), cp0.y.toFloat(), cp1.x.toFloat(), cp1.y.toFloat(), p.x.toFloat(), p.y.toFloat())
+        path.moveTo(curvePoints[0].x.toFloat(), curvePoints[0].y.toFloat())
+        for (i in 1..curvePoints.size - 1) {
+            path.lineTo(curvePoints[i].x.toFloat(), curvePoints[i].y.toFloat())
         }
 
         return path
@@ -273,6 +274,12 @@ fun Int.restrict(min: Int, max: Int): Int = when {
 
 
 fun Float.restrict(min: Float, max: Float): Float = when {
+    this < min -> min
+    this > max -> max
+    else -> this
+}
+
+fun Double.restrict(min: Double, max: Double): Double = when {
     this < min -> min
     this > max -> max
     else -> this
