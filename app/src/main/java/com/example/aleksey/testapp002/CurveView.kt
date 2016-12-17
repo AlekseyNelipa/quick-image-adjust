@@ -11,17 +11,19 @@ import java.util.*
 internal class CurveView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     val _k = 2
     val _points = arrayOf(
-            PointF(0F, 1000F),
-            PointF(333.333F, 666.666F),
-            PointF(666.666F, 333.333F),
-            PointF(1000F, 0F)
+            VectorD(0.0, 1000.0),
+            VectorD(333.333, 666.666),
+            VectorD(666.666, 333.333),
+            VectorD(1000.0, 0.0)
     )
     val _paint: Paint
     val _paintControlPoint: Paint
     val _paintFill: Paint
     private val _bitmap: Bitmap
     private val _bitmapAltered: Bitmap
-    val _pixelsOrig: IntArray
+    val _pixelsOrigR: IntArray
+    val _pixelsOrigG: IntArray
+    val _pixelsOrigB: IntArray
     val _pixelsAltered: IntArray
 
     var _selectedIndex: Int = -1
@@ -46,21 +48,28 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
         _bitmap = BitmapFactory.decodeResource(resources, R.drawable.chariot)
         _bitmapAltered = Bitmap.createBitmap(_bitmap.width, _bitmap.height, Bitmap.Config.ARGB_8888)
-        _pixelsOrig = IntArray(_bitmap.height * _bitmap.width)
-        _bitmap.getPixels(_pixelsOrig, 0, _bitmap.width, 0, 0, _bitmap.width, _bitmap.height)
-        _pixelsAltered = _pixelsOrig.copyOf()
+        val pixelsOrig = IntArray(_bitmap.height * _bitmap.width)
+        _pixelsOrigR = IntArray(_bitmap.height * _bitmap.width)
+        _pixelsOrigG = IntArray(_bitmap.height * _bitmap.width)
+        _pixelsOrigB = IntArray(_bitmap.height * _bitmap.width)
+        _bitmap.getPixels(pixelsOrig, 0, _bitmap.width, 0, 0, _bitmap.width, _bitmap.height)
+        _pixelsAltered = pixelsOrig.copyOf()
+        for (i in 0..pixelsOrig.size - 1) {
+            _pixelsOrigR[i] = pixelsOrig[i] shr 16 and 0xff
+            _pixelsOrigG[i] = pixelsOrig[i] shr 8 and 0xff
+            _pixelsOrigB[i] = pixelsOrig[i] and 0xff
+        }
         alterBitmap()
 
     }
 
     private fun alterBitmap() {
         val valueMap = buildColorMap()
-        for (i in 0.._pixelsOrig.size - 1) {
-            val r = _pixelsOrig[i] shr 16 and 0xff
-            val g = _pixelsOrig[i] shr 8 and 0xff
-            val b = _pixelsOrig[i] and 0xff
-
-            _pixelsAltered[i] = 0xff000000.toInt() or (valueMap[r] shl 16) or (valueMap[g] shl 8) or valueMap[b]
+        for (i in 0.._pixelsAltered.size - 1) {
+            _pixelsAltered[i] = (0xff000000.toInt()
+                or (valueMap[_pixelsOrigR[i]] shl 16)
+                or (valueMap[_pixelsOrigG[i]] shl 8)
+                or valueMap[_pixelsOrigB[i]])
 
         }
 
@@ -70,9 +79,9 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     private fun buildColorMap(): IntArray {
         val valueMap = IntArray(256)
         val controlPoints = getControlPoints(_points)
-        var xInt = 0
-        var x0 = 0.0
-        var y0 = _points[0].y.toDouble()
+
+
+        val curvePoints = ArrayList<VectorD>()
 
         for (i in 1.._points.size - 1) {
             val fx = { t: Double ->
@@ -90,24 +99,27 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
             val numSteps = Math.max(5, (50 * (_points[i].x - _points[i - 1].x) / 1000).toInt())
 
-
-
             for (tt in 0..numSteps) {
                 val t = tt / numSteps.toDouble()
 
-                val x = fx(t) * 255 / 1000
-                val y = fy(t) * 255 / 1000
+                val x = fx(t)
+                val y = fy(t)
 
-                while (xInt <= x.toInt()) {
-                    if (x == x0)
-                        valueMap[xInt] = 255 - y0.toInt().restrict(0, 255)
-                    else
-                        valueMap[xInt] = 255 - (y0 + (y - y0) * (xInt - x0) / (x - x0)).toInt().restrict(0, 255)
-                    xInt++
-                }
-                x0 = x
-                y0 = y
+                curvePoints.add(VectorD(x, y))
+            }
+        }
 
+        var xInt = 0
+        for(i in 1..curvePoints.size-1) {
+            val (x, y) = curvePoints[i] * 255 / 1000
+            val (x0, y0) = curvePoints[i-1] * 255 / 1000
+
+            while (xInt <= x.toInt()) {
+                if (x == x0)
+                    valueMap[xInt] = 255 - y0.toInt().restrict(0, 255)
+                else
+                    valueMap[xInt] = 255 - (y0 + (y - y0) * (xInt - x0) / (x - x0)).toInt().restrict(0, 255)
+                xInt++
             }
         }
         return valueMap
@@ -132,13 +144,13 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
         canvas.drawPath(path, _paint)
         for (point in _points) {
-            canvas.drawCircle(point.x, point.y, 20F, _paint)
+            canvas.drawCircle(point.x.toFloat(), point.y.toFloat(), 20F, _paint)
         }
         if (_selectedIndex != -1)
-            canvas.drawCircle(_points[_selectedIndex].x, _points[_selectedIndex].y, 20F, _paintFill)
+            canvas.drawCircle(_points[_selectedIndex].x.toFloat(), _points[_selectedIndex].y.toFloat(), 20F, _paintFill)
 
         for (point in controlPoints) {
-            canvas.drawCircle(point.x, point.y, 10F, _paintControlPoint)
+            canvas.drawCircle(point.x.toFloat(), point.y.toFloat(), 10F, _paintControlPoint)
         }
     }
 
@@ -171,13 +183,13 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
             }
             MotionEvent.ACTION_MOVE -> {
                 if (_selectedIndex != -1) {
-                    val currentPoint = _points[_selectedIndex]
-                    currentPoint.x = when (_selectedIndex) {
+                    val x = when (_selectedIndex) {
                         0 -> 0F
                         _points.size - 1 -> 1000F
                         else -> x.restrict(0F, 1000F)
                     }
-                    currentPoint.y = y.restrict(0F, 1000F)
+                    val y = y.restrict(0F, 1000F)
+                    _points[_selectedIndex] = VectorD(x.toDouble(), y.toDouble())
                     invalidate()
                 }
             }
@@ -194,57 +206,57 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     }
 
 
-    private fun createPath(points: Array<PointF>, controlPoints: List<PointF>): Path {
+    private fun createPath(points: Array<VectorD>, controlPoints: List<VectorD>): Path {
         val path = Path()
 
-        path.moveTo(points[0].x, points[0].y)
+        path.moveTo(points[0].x.toFloat(), points[0].y.toFloat())
         for (i in 1..points.size - 1) {
             val cp0 = controlPoints[i * 2 - 2]
             val cp1 = controlPoints[i * 2 - 1]
             val p = points[i]
-            path.cubicTo(cp0.x, cp0.y, cp1.x, cp1.y, p.x, p.y)
+            path.cubicTo(cp0.x.toFloat(), cp0.y.toFloat(), cp1.x.toFloat(), cp1.y.toFloat(), p.x.toFloat(), p.y.toFloat())
         }
 
         return path
     }
 
-    private fun getControlPoints(points: Array<PointF>): Vector<PointF> {
-        val controlPoints = Vector<PointF>()
+    private fun getControlPoints(points: Array<VectorD>): List<VectorD> {
+        val controlPoints = ArrayList<VectorD>()
 
-        controlPoints.addElement(getFirstControlPoint(points[0], points[1]))
+        controlPoints.add(getFirstControlPoint(points[0], points[1]))
         for (i in 1..points.size - 2) {
             val (p1, p2) = getControlPoints(points[i - 1], points[i], points[i + 1])
-            controlPoints.addElement(p1)
-            controlPoints.addElement(p2)
+            controlPoints.add(p1)
+            controlPoints.add(p2)
         }
-        controlPoints.addElement(getLastControlPoint(points[points.size - 2], points.last()))
+        controlPoints.add(getLastControlPoint(points[points.size - 2], points.last()))
         return controlPoints
     }
 
 
-    private fun getFirstControlPoint(p0: PointF, p1: PointF): PointF {
+    private fun getFirstControlPoint(p0: VectorD, p1: VectorD): VectorD {
         val dx = p1.x - p0.x
         val dy = -(p1.y - p0.y)
         return when {
-            8 * dx > 7 * dy && 7 * dx < 8 * dy -> PointF(dx / 3 + p0.x, -dy / 3 + p0.y)
-            dx > dy -> PointF(dx / 3 + p0.x, p0.y)
-            else -> PointF(p0.x, -dy / 3 + p0.y)
+            8 * dx > 7 * dy && 7 * dx < 8 * dy -> VectorD(dx / 3 + p0.x, -dy / 3 + p0.y)
+            dx > dy -> VectorD(dx / 3 + p0.x, p0.y)
+            else -> VectorD(p0.x, -dy / 3 + p0.y)
         }
     }
 
-    private fun getLastControlPoint(pNextToLast: PointF, pLast: PointF): PointF {
+    private fun getLastControlPoint(pNextToLast: VectorD, pLast: VectorD): VectorD {
         val dx = pLast.x - pNextToLast.x
         val dy = -(pLast.y - pNextToLast.y)
         return when {
-            8 * dx > 7 * dy && 7 * dx < 8 * dy -> PointF(pLast.x - dx / _k, pLast.y + dy / _k)
-            dx > dy -> PointF(pLast.x - dx / _k, pLast.y)
-            else -> PointF(pLast.x, pLast.y + dy / _k)
+            8 * dx > 7 * dy && 7 * dx < 8 * dy -> VectorD(pLast.x - dx / _k, pLast.y + dy / _k)
+            dx > dy -> VectorD(pLast.x - dx / _k, pLast.y)
+            else -> VectorD(pLast.x, pLast.y + dy / _k)
         }
     }
 
-    private fun getControlPoints(p0: PointF, p1: PointF, p2: PointF): Pair<PointF, PointF> {
-        val v1 = VectorD(p1, p0)
-        val v2 = VectorD(p1, p2)
+    private fun getControlPoints(p0: VectorD, p1: VectorD, p2: VectorD): Pair<VectorD, VectorD> {
+        val v1 = p0 - p1
+        val v2 = p2 - p1
         val vp = (v1.normalize() + v2.normalize()).onePerpendicular().normalize()
         val vp1 = vp * (v1.x * vp.x / _k)
         val vp2 = vp * (v2.x * vp.x / _k)

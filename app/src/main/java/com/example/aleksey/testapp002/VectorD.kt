@@ -2,10 +2,9 @@ package com.example.aleksey.testapp002
 
 import android.graphics.PointF
 
-data class VectorD(val x: Double, val y: Double) {
 
-    constructor(from: PointF, to: PointF)
-            : this((to.x - from.x).toDouble(), (to.y - from.y).toDouble())
+
+data class VectorD(val x: Double, val y: Double) {
 
     fun normalize(): VectorD {
         val len = this.length()
@@ -25,6 +24,10 @@ data class VectorD(val x: Double, val y: Double) {
 
     infix operator fun plus(v: VectorD): VectorD {
         return VectorD(this.x + v.x, this.y + v.y)
+    }
+
+    infix operator fun minus(v: VectorD): VectorD {
+        return VectorD(this.x - v.x, this.y - v.y)
     }
 
     fun dot(v: VectorD): Double {
