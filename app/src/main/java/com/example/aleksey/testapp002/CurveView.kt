@@ -148,10 +148,10 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
         canvas.drawPath(path, _paint)
         for (point in _points) {
-            canvas.drawCircle(point.x.toFloat(), point.y.toFloat(), 20F, _paint)
+            canvas.drawCircle(point.x.toFloat(), point.y.toFloat(), 30F, _paint)
         }
         if (_selectedIndex != -1)
-            canvas.drawCircle(_points[_selectedIndex].x.toFloat(), _points[_selectedIndex].y.toFloat(), 20F, _paintFill)
+            canvas.drawCircle(_points[_selectedIndex].x.toFloat(), _points[_selectedIndex].y.toFloat(), 30F, _paintFill)
 
         for (point in controlPoints) {
             canvas.drawCircle(point.x.toFloat(), point.y.toFloat(), 10F, _paintControlPoint)
