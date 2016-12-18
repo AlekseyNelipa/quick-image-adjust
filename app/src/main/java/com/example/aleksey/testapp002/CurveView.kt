@@ -5,18 +5,12 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import java.util.*
 
 
 internal class CurveView(context: Context, attrs: AttributeSet) : View(context, attrs) {
-    val _k = 3
+
     val _pointRadius = 30F
-    val _points = arrayListOf(
-            VectorD(0, 1000),
-            VectorD(333.333, 666.666),
-            VectorD(666.666, 333.333),
-            VectorD(1000, 0)
-    )
+
     val _paint: Paint
     val _paintControlPoint: Paint
     val _paintFill: Paint
@@ -27,6 +21,8 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
     val _model: Model
 
+    val _curve: Curve
+
     private var _width: Int? = null
     private var _height: Int? = null
     private var _scale: Float? = null
@@ -34,6 +30,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
     init {
         _model = (context as MainActivity)._model
+        _curve = Curve()
 
         _paint = Paint()
         _paint.style = Paint.Style.STROKE
@@ -53,41 +50,6 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     }
 
 
-
-
-
-    private fun getCurvePoints(points: List<VectorD>, controlPoints: List<VectorD>): ArrayList<VectorD> {
-        val curvePoints = ArrayList<VectorD>()
-
-        curvePoints.add(points[0])
-        for (i in 1..points.size - 1) {
-            val fx = { t: Double ->
-                (points[i].x * t * t * t
-                        + 3 * controlPoints[i * 2 - 1].x * t * t * (1 - t)
-                        + 3 * controlPoints[i * 2 - 2].x * t * (1 - t) * (1 - t)
-                        + points[i - 1].x * (1 - t) * (1 - t) * (1 - t))
-            }
-            val fy = { t: Double ->
-                (points[i].y * t * t * t
-                        + 3 * controlPoints[i * 2 - 1].y * t * t * (1 - t)
-                        + 3 * controlPoints[i * 2 - 2].y * t * (1 - t) * (1 - t)
-                        + points[i - 1].y * (1 - t) * (1 - t) * (1 - t))
-            }
-
-            val numSteps = Math.max(5, (50 * (points[i].x - points[i - 1].x) / 1000).toInt())
-
-            for (tt in 1..numSteps) {
-                val t = tt / numSteps.toDouble()
-
-                val x = fx(t).restrict(0.0, 1000.0)
-                val y = fy(t).restrict(0.0, 1000.0)
-
-                curvePoints.add(VectorD(x, y))
-            }
-        }
-        return curvePoints
-    }
-
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
@@ -104,18 +66,18 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
         canvas.scale(_scale!!, _scale!!)
 
-        val controlPoints = getControlPoints(_points)
-        val curvePoints = getCurvePoints(_points, controlPoints)
-        val path = createPath(curvePoints)
+        val path = createPath(_curve.curvePoints)
 
         canvas.drawPath(path, _paint)
-        for (point in _points) {
+        for (point in _curve.points) {
             canvas.drawCircle(point.x.toFloat(), point.y.toFloat(), _pointRadius, _paint)
         }
-        if (_selectedIndex != -1)
-            canvas.drawCircle(_points[_selectedIndex].x.toFloat(), _points[_selectedIndex].y.toFloat(), 30F, _paintFill)
+        if (_selectedIndex != -1) {
+            val point = _curve.points[_selectedIndex]
+            canvas.drawCircle(point.x.toFloat(), point.y.toFloat(), 30F, _paintFill)
+        }
 
-        for (point in controlPoints) {
+        for (point in _curve.controlPoints) {
             canvas.drawCircle(point.x.toFloat(), point.y.toFloat(), 10F, _paintControlPoint)
         }
     }
@@ -139,9 +101,11 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
             MotionEvent.ACTION_DOWN -> {
                 when (_model.mode) {
                     EditMode.Add -> {
-                        val newPoint = findPointOnCurve(x, y)
+                        val newPoint = _curve.findPointOnCurve(x, y)
                         if (newPoint != null) {
-                            _points.add(_points.indexOfFirst { it.x > newPoint.x }, newPoint)
+
+                            _curve.insertPoint(newPoint)
+
                             _model.mode = EditMode.Move
                             alterBitmap()
                             invalidate()
@@ -149,10 +113,10 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
                     }
                     EditMode.Remove -> {
                         val index = getPointNumber(x, y)
-                        if (index > 0 && index < _points.size - 1) {
+                        if (index > 0 && index < _curve.points.size - 1) {
                             if (_selectedIndex == index)
                                 _selectedIndex = -1
-                            _points.removeAt(index)
+                            _curve.removePoint(index)
                             _model.mode = EditMode.Move
                             alterBitmap()
                             invalidate()
@@ -169,11 +133,13 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
                 if (_selectedIndex != -1) {
                     val xNew = when (_selectedIndex) {
                         0 -> 0F
-                        _points.size - 1 -> 1000F
-                        else -> x.restrict(_points[_selectedIndex - 1].x.toFloat() + 1, _points[_selectedIndex + 1].x.toFloat() - 1)
+                        _curve.points.size - 1 -> 1000F
+                        else -> x.restrict(
+                                _curve.points[_selectedIndex - 1].x.toFloat() + 1,
+                                _curve.points[_selectedIndex + 1].x.toFloat() - 1)
                     }
                     val yNew = y.restrict(0F, 1000F)
-                    _points[_selectedIndex] = VectorD(xNew, yNew)
+                    _curve.movePoint(_selectedIndex, VectorD(xNew, yNew))
                     invalidate()
                 }
             }
@@ -190,46 +156,14 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     }
 
     private fun alterBitmap() {
-        val controlPoints = getControlPoints(_points)
-        val curvePoints = getCurvePoints(_points, controlPoints)
-
-        _imageData.alterBitmap(curvePoints)
+        _imageData.alterBitmap(_curve.curvePoints)
 
     }
 
-    private fun findPointOnCurve(x: Float, y: Float): VectorD? {
-        val controlPoints = getControlPoints(_points)
-        val curvePoints = getCurvePoints(_points, controlPoints)
-        val clickPoint = VectorD(x, y)
-
-        var closestIndex = -1
-        var minDistSq = 1000.0 * 1000.0
-
-        for (i in 0..curvePoints.size - 1) {
-            val distSq = curvePoints[i].distanceSquared(clickPoint)
-            if (distSq < minDistSq) {
-                minDistSq = distSq
-                closestIndex = i
-            }
-            if (distSq < 1)
-                return curvePoints[closestIndex]
-        }
-
-        val otherIndex = if (closestIndex == 0) 1 else closestIndex - 1
-
-        val vDir = (curvePoints[closestIndex] - curvePoints[otherIndex]).normalize()
-        val vPoint = curvePoints[closestIndex] + vDir * (clickPoint - curvePoints[closestIndex]).dot(vDir)
-
-        if(vPoint.x<=0 || vPoint.y>=1000)
-            return null
-
-
-        return VectorD(vPoint.x, vPoint.y.restrict(0.0, 1000.0))
-    }
 
     private fun getPointNumber(x: Float, y: Float): Int {
         val radiusSq = _pointRadius * _pointRadius
-        return _points.indexOfFirst {
+        return _curve.points.indexOfFirst {
             val dx = it.x - x
             val dy = it.y - y
             dx * dx < radiusSq && dy * dy < radiusSq
@@ -248,54 +182,10 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         return path
     }
 
-    private fun getControlPoints(points: List<VectorD>): List<VectorD> {
-        val controlPoints = ArrayList<VectorD>()
-
-        controlPoints.add(getFirstControlPoint(points[0], points[1]))
-        for (i in 1..points.size - 2) {
-            val (p1, p2) = getControlPoints(points[i - 1], points[i], points[i + 1])
-            controlPoints.add(p1)
-            controlPoints.add(p2)
-        }
-        controlPoints.add(getLastControlPoint(points[points.size - 2], points.last()))
-        return controlPoints
-    }
-
-
-    private fun getFirstControlPoint(p0: VectorD, p1: VectorD): VectorD {
-        val dx = p1.x - p0.x
-        val dy = -(p1.y - p0.y)
-        return when {
-            8 * dx > 7 * dy && 7 * dx < 8 * dy -> VectorD(dx / 3 + p0.x, -dy / 3 + p0.y)
-            dx > dy -> VectorD(dx / 3 + p0.x, p0.y)
-            else -> VectorD(p0.x, -dy / 3 + p0.y)
-        }
-    }
-
-    private fun getLastControlPoint(pNextToLast: VectorD, pLast: VectorD): VectorD {
-        val dx = pLast.x - pNextToLast.x
-        val dy = -(pLast.y - pNextToLast.y)
-        return when {
-            8 * dx > 7 * dy && 7 * dx < 8 * dy -> VectorD(pLast.x - dx / _k, pLast.y + dy / _k)
-            dx > dy -> VectorD(pLast.x - dx / _k, pLast.y)
-            else -> VectorD(pLast.x, pLast.y + dy / _k)
-        }
-    }
-
-    private fun getControlPoints(p0: VectorD, p1: VectorD, p2: VectorD): Pair<VectorD, VectorD> {
-        val v1 = p0 - p1
-        val v2 = p2 - p1
-        val vp = (v1.normalize() + v2.normalize()).onePerpendicular().normalize()
-        val vp1 = vp * (v1.x * vp.x / _k)
-        val vp2 = vp * (v2.x * vp.x / _k)
-        return Pair(p1 + vp1, p1 + vp2)
-    }
 
     fun setImage(bitmap: Bitmap) {
         _imageData = ImageData(bitmap)
         alterBitmap()
-        //Log.d("w", _imageData.bitmapAltered.width.toString())
-        //Log.d("h", _imageData.bitmapAltered.height.toString())
         invalidate()
     }
 
