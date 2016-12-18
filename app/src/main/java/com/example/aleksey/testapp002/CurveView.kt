@@ -8,8 +8,6 @@ import android.view.View
 import java.util.*
 
 
-
-
 internal class CurveView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     val _k = 3
     val _pointRadius = 30F
@@ -30,7 +28,8 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     val _pixelsAltered: IntArray
 
     var _selectedIndex: Int = -1
-    var _mode: String = ""
+
+    public var model: Model? = null
 
     private var _width: Int? = null
     private var _height: Int? = null
@@ -71,9 +70,9 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         val valueMap = buildColorMap()
         for (i in 0.._pixelsAltered.size - 1) {
             _pixelsAltered[i] = (0xff000000.toInt()
-                or (valueMap[_pixelsOrigR[i]] shl 16)
-                or (valueMap[_pixelsOrigG[i]] shl 8)
-                or valueMap[_pixelsOrigB[i]])
+                    or (valueMap[_pixelsOrigR[i]] shl 16)
+                    or (valueMap[_pixelsOrigG[i]] shl 8)
+                    or valueMap[_pixelsOrigB[i]])
 
         }
 
@@ -86,9 +85,9 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         val curvePoints = getCurvePoints(_points, controlPoints)
 
         var xInt = 0
-        for(i in 1..curvePoints.size-1) {
+        for (i in 1..curvePoints.size - 1) {
             val (x, y) = curvePoints[i] * 255 / 1000
-            val (x0, y0) = curvePoints[i-1] * 255 / 1000
+            val (x0, y0) = curvePoints[i - 1] * 255 / 1000
 
             while (xInt <= x.toInt()) {
                 if (x == x0)
@@ -145,12 +144,6 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
                 Rect(100, 100, _width!! - 100, _bitmapAltered.height * (_width!! - 200) / _bitmapAltered.width),
                 _paint)
 
-        if(_mode=="ADD_POINT")
-            canvas.drawText("Add Point", 100F, 100F, _paint)
-
-        if(_mode=="REMOVE_POINT")
-            canvas.drawText("Remove Point", 100F, 100F, _paint)
-
         canvas.scale(_scale!!, _scale!!)
 
         val controlPoints = getControlPoints(_points)
@@ -178,7 +171,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (_scale == null)
+        if (_scale == null || model==null)
             return false
 
         val x = event!!.x / _scale!!
@@ -186,28 +179,28 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                when (_mode) {
-                    "ADD_POINT"-> {
+                when (model!!.mode) {
+                    EditMode.Add -> {
                         val newPoint = findPointOnCurve(x, y)
-                        if(newPoint!=null) {
+                        if (newPoint != null) {
                             _points.add(_points.indexOfFirst { it.x > newPoint.x }, newPoint)
-                            _mode = ""
+                            model!!.mode = EditMode.Move
                             alterBitmap()
                             invalidate()
                         }
                     }
-                    "REMOVE_POINT" -> {
+                    EditMode.Remove -> {
                         val index = getPointNumber(x, y)
-                        if(index>0 && index<_points.size-1) {
-                            if(_selectedIndex==index)
+                        if (index > 0 && index < _points.size - 1) {
+                            if (_selectedIndex == index)
                                 _selectedIndex = -1
                             _points.removeAt(index)
-                            _mode = ""
+                            model!!.mode = EditMode.Move
                             alterBitmap()
                             invalidate()
                         }
                     }
-                    else -> {
+                    EditMode.Move -> {
                         _selectedIndex = getPointNumber(x, y)
                         if (_selectedIndex != -1)
                             invalidate()
@@ -219,7 +212,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
                     val xNew = when (_selectedIndex) {
                         0 -> 0F
                         _points.size - 1 -> 1000F
-                        else -> x.restrict(_points[_selectedIndex-1].x.toFloat()+1, _points[_selectedIndex+1].x.toFloat()-1)
+                        else -> x.restrict(_points[_selectedIndex - 1].x.toFloat() + 1, _points[_selectedIndex + 1].x.toFloat() - 1)
                     }
                     val yNew = y.restrict(0F, 1000F)
                     _points[_selectedIndex] = VectorD(xNew, yNew)
@@ -244,22 +237,22 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         val clickPoint = VectorD(x, y)
 
         var closestIndex = -1
-        var minDistSq = 1000.0*1000.0
+        var minDistSq = 1000.0 * 1000.0
 
-        for(i in 0..curvePoints.size-1) {
+        for (i in 0..curvePoints.size - 1) {
             val distSq = curvePoints[i].distanceSquared(clickPoint)
-            if(distSq<minDistSq) {
+            if (distSq < minDistSq) {
                 minDistSq = distSq
                 closestIndex = i
             }
-            if(distSq<1)
+            if (distSq < 1)
                 return curvePoints[closestIndex]
         }
 
-        val otherIndex = if(closestIndex==0) 1 else closestIndex-1
+        val otherIndex = if (closestIndex == 0) 1 else closestIndex - 1
 
-        val vDir = (curvePoints[closestIndex]-curvePoints[otherIndex]).normalize()
-        val vPoint = vDir*(clickPoint-curvePoints[closestIndex]).dot(vDir)
+        val vDir = (curvePoints[closestIndex] - curvePoints[otherIndex]).normalize()
+        val vPoint = vDir * (clickPoint - curvePoints[closestIndex]).dot(vDir)
         return curvePoints[closestIndex] + vPoint
     }
 
@@ -327,15 +320,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         return Pair(p1 + vp1, p1 + vp2)
     }
 
-    fun startAddPoint() {
-        _mode = "ADD_POINT"
-        invalidate()
-    }
 
-    fun startRemovePoint() {
-        _mode = "REMOVE_POINT"
-        invalidate()
-    }
 }
 
 fun Int.restrict(min: Int, max: Int): Int = when {
