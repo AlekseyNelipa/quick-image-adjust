@@ -12,4 +12,11 @@ public class Model : BaseObservable() {
             field = mode
             notifyPropertyChanged(BR.mode)
         }
+
+    @Bindable
+    var preview: Boolean = true
+        set(preview) {
+            field = preview
+            notifyPropertyChanged(BR.preview)
+        }
 }

@@ -29,7 +29,12 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
 
     init {
-        _model = (context as MainActivity)._model
+        if(isInEditMode) {
+            _model = Model()
+        }
+        else {
+            _model = (context as MainActivity)._model
+        }
         _curve = Curve()
 
         _paint = Paint()
