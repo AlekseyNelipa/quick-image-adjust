@@ -3,7 +3,7 @@ package com.example.aleksey.testapp002
 import java.util.*
 
 class Curve {
-    val _k = 3
+    private val _k = 4
     val points = arrayListOf(
             VectorD(0, 1000),
             VectorD(333.333, 666.666),

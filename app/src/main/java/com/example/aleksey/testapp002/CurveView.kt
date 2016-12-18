@@ -9,19 +9,19 @@ import android.view.View
 
 internal class CurveView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
-    val _pointRadius = 30F
+    private val _pointRadius = 30F
 
-    val _paint: Paint
-    val _paintControlPoint: Paint
-    val _paintFill: Paint
+    private val _paint: Paint
+    private val _paintControlPoint: Paint
+    private val _paintFill: Paint
     private var _imageData: ImageData
 
 
-    var _selectedIndex: Int = -1
+    private var _selectedIndex: Int = -1
 
-    val _model: Model
+    private val _model: Model
 
-    val _curve: Curve
+    private val _curve: Curve
 
     private var _width: Int? = null
     private var _height: Int? = null
@@ -91,10 +91,10 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (_scale == null)
+        if (_scale == null || event==null)
             return false
 
-        val x = event!!.x / _scale!!
+        val x = event.x / _scale!!
         val y = event.y / _scale!!
 
         when (event.action) {
