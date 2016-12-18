@@ -3,10 +3,8 @@ package com.example.aleksey.testapp002
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
-`import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import java.io.Console
 import java.util.*
 
 
