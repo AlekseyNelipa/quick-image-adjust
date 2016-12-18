@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">TestApp002</string>
+    <string name="add_point">Add Point</string>
+    <string name="remove_point">Remove Point</string>
 </resources>

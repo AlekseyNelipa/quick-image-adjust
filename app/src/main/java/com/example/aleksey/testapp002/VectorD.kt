@@ -6,6 +6,8 @@ import android.graphics.PointF
 
 data class VectorD(val x: Double, val y: Double) {
 
+    constructor(x: Number, y: Number) : this(x.toDouble(), y.toDouble())
+
     fun normalize(): VectorD {
         val len = this.length()
         return VectorD(this.x / len, this.y / len)
@@ -32,6 +34,10 @@ data class VectorD(val x: Double, val y: Double) {
 
     fun dot(v: VectorD): Double {
         return this.x * v.x + this.y * v.y
+    }
+
+    fun distanceSquared(v: VectorD): Double {
+        return (this.x - v.x) * (this.x - v.x) + (this.y - v.y) * (this.y - v.y)
     }
 
 

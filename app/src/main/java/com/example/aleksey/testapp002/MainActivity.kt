@@ -2,6 +2,7 @@ package com.example.aleksey.testapp002
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.view.View
 
 
 class MainActivity : AppCompatActivity() {
@@ -14,7 +15,15 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    fun onAddPoint(view: View) {
+        val curveView = findViewById(R.id.surface_view) as CurveView
+        curveView.startAddPoint()
+    }
 
+    fun onRemovePoint(view: View) {
+        val curveView = findViewById(R.id.surface_view) as CurveView
+        curveView.startRemovePoint()
+    }
 }
 
 
