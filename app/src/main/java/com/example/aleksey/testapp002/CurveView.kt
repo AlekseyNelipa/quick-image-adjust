@@ -5,7 +5,16 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import com.example.aleksey.testapp002.databinding.ActivityMainBinding
 import java.util.*
+import android.view.LayoutInflater
+import android.content.Context.LAYOUT_INFLATER_SERVICE
+import android.content.ContextWrapper
+import android.app.Activity
+
+
+
+
 
 
 internal class CurveView(context: Context, attrs: AttributeSet) : View(context, attrs) {
@@ -29,7 +38,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
     var _selectedIndex: Int = -1
 
-    public var model: Model? = null
+    val _model: Model
 
     private var _width: Int? = null
     private var _height: Int? = null
@@ -37,6 +46,8 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
 
     init {
+        _model = (context as MainActivity)._model
+
         _paint = Paint()
         _paint.style = Paint.Style.STROKE
         _paint.color = Color.RED
@@ -171,7 +182,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (_scale == null || model==null)
+        if (_scale == null)
             return false
 
         val x = event!!.x / _scale!!
@@ -179,12 +190,12 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                when (model!!.mode) {
+                when (_model.mode) {
                     EditMode.Add -> {
                         val newPoint = findPointOnCurve(x, y)
                         if (newPoint != null) {
                             _points.add(_points.indexOfFirst { it.x > newPoint.x }, newPoint)
-                            model!!.mode = EditMode.Move
+                            _model.mode = EditMode.Move
                             alterBitmap()
                             invalidate()
                         }
@@ -195,7 +206,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
                             if (_selectedIndex == index)
                                 _selectedIndex = -1
                             _points.removeAt(index)
-                            model!!.mode = EditMode.Move
+                            _model.mode = EditMode.Move
                             alterBitmap()
                             invalidate()
                         }

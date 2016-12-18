@@ -18,8 +18,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         binding.model = _model
-        val curveView = findViewById(R.id.surface_view) as CurveView
-        curveView.model = _model
+        //val curveView = findViewById(R.id.surface_view) as CurveView
+        //curveView.model = _model
 
     }
 
