@@ -23,6 +23,54 @@ class Curve {
         curvePoints = getCurvePoints()
     }
 
+
+    fun insertPoint(newPoint: VectorD) {
+        val index = points.indexOfFirst { it.x > newPoint.x }
+        if (index <= 0 || index >= points.size - 1)
+            return
+        points.add(index, newPoint)
+        resetCurvePoints()
+
+    }
+
+    fun removePoint(index: Int) {
+        points.removeAt(index)
+        resetCurvePoints()
+    }
+
+    fun movePoint(index: Int, newPoint: VectorD) {
+        points[index] = newPoint
+        resetCurvePoints()
+    }
+
+    fun findPointOnCurve(x: Float, y: Float): VectorD? {
+        val clickPoint = VectorD(x, y)
+
+        var closestIndex = -1
+        var minDistSq = 1000.0 * 1000.0
+
+        for (i in 0..curvePoints.size - 1) {
+            val distSq = curvePoints[i].distanceSquared(clickPoint)
+            if (distSq < minDistSq) {
+                minDistSq = distSq
+                closestIndex = i
+            }
+            if (distSq < 1)
+                return curvePoints[closestIndex]
+        }
+
+        val otherIndex = if (closestIndex == 0) 1 else closestIndex - 1
+
+        val vDir = (curvePoints[closestIndex] - curvePoints[otherIndex]).normalize()
+        val vPoint = curvePoints[closestIndex] + vDir * (clickPoint - curvePoints[closestIndex]).dot(vDir)
+
+        if (vPoint.x <= 0 || vPoint.y >= 1000)
+            return null
+
+
+        return VectorD(vPoint.x, vPoint.y.restrict(0.0, 1000.0))
+    }
+
     private fun getCurvePoints(): ArrayList<VectorD> {
         val curvePoints = ArrayList<VectorD>()
 
@@ -73,9 +121,9 @@ class Curve {
         val dx = p1.x - p0.x
         val dy = -(p1.y - p0.y)
         return when {
-            8 * dx > 7 * dy && 7 * dx < 8 * dy -> VectorD(dx / 3 + p0.x, -dy / 3 + p0.y)
-            dx > dy -> VectorD(dx / 3 + p0.x, p0.y)
-            else -> VectorD(p0.x, -dy / 3 + p0.y)
+            8 * dx > 7 * dy && 7 * dx < 8 * dy -> VectorD(dx / _k + p0.x, -dy / _k + p0.y)
+            dx > dy -> VectorD(dx / _k + p0.x, p0.y)
+            else -> VectorD(p0.x, -dy / _k + p0.y)
         }
     }
 
@@ -92,60 +140,11 @@ class Curve {
     private fun getControlPoints(p0: VectorD, p1: VectorD, p2: VectorD): Pair<VectorD, VectorD> {
         val v1 = p0 - p1
         val v2 = p2 - p1
-        val vp = (v1.normalize() + v2.normalize()).onePerpendicular().normalize()
-        val vp1 = vp * (v1.x * vp.x / _k)
-        val vp2 = vp * (v2.x * vp.x / _k)
+        val vp = (v1.normalize() + v2.normalize()).onePerpendicular()
+        val vp1 = vp * (v1.x / (_k * vp.x))
+        val vp2 = vp * (v2.x / (_k * vp.x))
         return Pair(p1 + vp1, p1 + vp2)
     }
-
-    fun insertPoint(newPoint: VectorD) {
-        val index = points.indexOfFirst { it.x > newPoint.x }
-        if (index <= 0 || index >= points.size - 1)
-            return
-        points.add(index, newPoint)
-        resetCurvePoints()
-
-    }
-
-    fun removePoint(index: Int) {
-        points.removeAt(index)
-        resetCurvePoints()
-    }
-
-    fun movePoint(index: Int, newPoint: VectorD) {
-        points[index] = newPoint
-        resetCurvePoints()
-    }
-
-
-    fun findPointOnCurve(x: Float, y: Float): VectorD? {
-        val clickPoint = VectorD(x, y)
-
-        var closestIndex = -1
-        var minDistSq = 1000.0 * 1000.0
-
-        for (i in 0..curvePoints.size - 1) {
-            val distSq = curvePoints[i].distanceSquared(clickPoint)
-            if (distSq < minDistSq) {
-                minDistSq = distSq
-                closestIndex = i
-            }
-            if (distSq < 1)
-                return curvePoints[closestIndex]
-        }
-
-        val otherIndex = if (closestIndex == 0) 1 else closestIndex - 1
-
-        val vDir = (curvePoints[closestIndex] - curvePoints[otherIndex]).normalize()
-        val vPoint = curvePoints[closestIndex] + vDir * (clickPoint - curvePoints[closestIndex]).dot(vDir)
-
-        if (vPoint.x <= 0 || vPoint.y >= 1000)
-            return null
-
-
-        return VectorD(vPoint.x, vPoint.y.restrict(0.0, 1000.0))
-    }
-
 
 
 }
