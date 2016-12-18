@@ -2,5 +2,6 @@
     <string name="app_name">TestApp002</string>
     <string name="add_point">Add Point</string>
     <string name="remove_point">Remove Point</string>
+    <string name="reset">Reset</string>
     <string name="cancel_current">Cancel</string>
 </resources>

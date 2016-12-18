@@ -47,6 +47,11 @@ class MainActivity : AppCompatActivity() {
 
         }
     }
+
+    fun onReset(view: View) {
+        val curveView = findViewById(R.id.surface_view) as CurveView
+        curveView.reset()
+    }
 }
 
 

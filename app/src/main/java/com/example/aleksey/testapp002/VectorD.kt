@@ -36,6 +36,10 @@ data class VectorD(val x: Double, val y: Double) {
         return this.x * v.x + this.y * v.y
     }
 
+    fun lengthSquared(): Double {
+        return this.x*this.x + this.y*this.y
+    }
+
     fun distanceSquared(v: VectorD): Double {
         return (this.x - v.x) * (this.x - v.x) + (this.y - v.y) * (this.y - v.y)
     }
@@ -53,6 +57,10 @@ data class VectorD(val x: Double, val y: Double) {
 
     operator fun unaryMinus(): VectorD {
         return VectorD(-this.x, -this.y)
+    }
+
+    override fun toString(): String {
+        return "V(${this.x}, ${this.y})"
     }
 }
 

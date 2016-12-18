@@ -49,6 +49,15 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="@string/reset"
+            android:id="@+id/reset_button"
+            android:onClick='onReset'
+            android:visibility='@{model.mode==EditMode.Move ? View.VISIBLE : View.GONE}'/>
+
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="@string/cancel_current"
             android:id="@+id/cancel_button"
             android:onClick='@{()->model.setMode(EditMode.Move)}'

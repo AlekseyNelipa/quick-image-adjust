@@ -86,7 +86,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         _width = w
         _height = h
-        _scale = Math.min(w, h) / 1000F
+        _scale = Math.min(w, h) / _curve.max.toFloat()
         super.onSizeChanged(w, h, oldw, oldh)
     }
 
@@ -132,13 +132,13 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
             MotionEvent.ACTION_MOVE -> {
                 if (_selectedIndex != -1) {
                     val xNew = when (_selectedIndex) {
-                        0 -> 0F
-                        _curve.points.size - 1 -> 1000F
-                        else -> x.restrict(
-                                _curve.points[_selectedIndex - 1].x.toFloat() + 1,
-                                _curve.points[_selectedIndex + 1].x.toFloat() - 1)
+                        0 -> 0.0
+                        _curve.points.size - 1 -> _curve.max
+                        else -> x.toDouble().restrict(
+                                _curve.points[_selectedIndex - 1].x + 1,
+                                _curve.points[_selectedIndex + 1].x - 1)
                     }
-                    val yNew = y.restrict(0F, 1000F)
+                    val yNew = y.toDouble().restrict(0.0, _curve.max)
                     _curve.movePoint(_selectedIndex, VectorD(xNew, yNew))
                     invalidate()
                 }
@@ -156,7 +156,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     }
 
     private fun alterBitmap() {
-        _imageData.alterBitmap(_curve.curvePoints)
+        _imageData.alterBitmap(_curve.curvePoints, _curve.max)
 
     }
 
@@ -186,6 +186,12 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
     fun setImage(bitmap: Bitmap) {
         _imageData = ImageData(bitmap)
+        alterBitmap()
+        invalidate()
+    }
+
+    fun reset() {
+        _curve.reset()
         alterBitmap()
         invalidate()
     }
