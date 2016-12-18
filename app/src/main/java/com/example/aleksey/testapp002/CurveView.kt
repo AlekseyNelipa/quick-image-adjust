@@ -3,18 +3,68 @@ package com.example.aleksey.testapp002
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
+`import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import com.example.aleksey.testapp002.databinding.ActivityMainBinding
+import java.io.Console
 import java.util.*
-import android.view.LayoutInflater
-import android.content.Context.LAYOUT_INFLATER_SERVICE
-import android.content.ContextWrapper
-import android.app.Activity
 
 
+internal class ImageData (val bitmap: Bitmap) {
+    val bitmapAltered: Bitmap
+    private val pixelsOrigR: IntArray
+    private val pixelsOrigG: IntArray
+    private val pixelsOrigB: IntArray
+    private val pixelsAltered: IntArray
+    init {
+        bitmapAltered = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        val pixelsOrig = IntArray(bitmap.height * bitmap.width)
+        pixelsOrigR = IntArray(bitmap.height * bitmap.width)
+        pixelsOrigG = IntArray(bitmap.height * bitmap.width)
+        pixelsOrigB = IntArray(bitmap.height * bitmap.width)
+        bitmap.getPixels(pixelsOrig, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+        pixelsAltered = pixelsOrig.copyOf()
+        for (i in 0..pixelsOrig.size - 1) {
+            pixelsOrigR[i] = pixelsOrig[i] shr 16 and 0xff
+            pixelsOrigG[i] = pixelsOrig[i] shr 8 and 0xff
+            pixelsOrigB[i] = pixelsOrig[i] and 0xff
+        }
+    }
+
+    public fun alterBitmap(curvePoints: List<VectorD>) {
+        val valueMap = buildColorMap(curvePoints)
+        for (i in 0..pixelsAltered.size - 1) {
+            pixelsAltered[i] = (0xff000000.toInt()
+                    or (valueMap[pixelsOrigR[i]] shl 16)
+                    or (valueMap[pixelsOrigG[i]] shl 8)
+                    or valueMap[pixelsOrigB[i]])
+
+        }
+
+        bitmapAltered.setPixels(pixelsAltered, 0, bitmapAltered.width, 0, 0, bitmapAltered.width, bitmapAltered.height)
+    }
+
+    private fun buildColorMap(curvePoints: List<VectorD>): IntArray {
+        val valueMap = IntArray(256)
 
 
+        var xInt = 0
+        for (i in 1..curvePoints.size - 1) {
+            val (x, y) = curvePoints[i] * 255 / 1000
+            val (x0, y0) = curvePoints[i - 1] * 255 / 1000
+
+            while (xInt <= x.toInt()) {
+                if (x == x0)
+                    valueMap[xInt] = 255 - y0.toInt().restrict(0, 255)
+                else
+                    valueMap[xInt] = 255 - (y0 + (y - y0) * (xInt - x0) / (x - x0)).toInt().restrict(0, 255)
+                xInt++
+            }
+        }
+        return valueMap
+    }
+
+}
 
 
 internal class CurveView(context: Context, attrs: AttributeSet) : View(context, attrs) {
@@ -29,12 +79,8 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     val _paint: Paint
     val _paintControlPoint: Paint
     val _paintFill: Paint
-    private val _bitmap: Bitmap
-    private val _bitmapAltered: Bitmap
-    val _pixelsOrigR: IntArray
-    val _pixelsOrigG: IntArray
-    val _pixelsOrigB: IntArray
-    val _pixelsAltered: IntArray
+    private var _imageData: ImageData
+
 
     var _selectedIndex: Int = -1
 
@@ -59,57 +105,15 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         _paintControlPoint = Paint(_paint)
         _paintControlPoint.strokeWidth = 3F
 
-
-        _bitmap = BitmapFactory.decodeResource(resources, R.drawable.chariot)
-        _bitmapAltered = Bitmap.createBitmap(_bitmap.width, _bitmap.height, Bitmap.Config.ARGB_8888)
-        val pixelsOrig = IntArray(_bitmap.height * _bitmap.width)
-        _pixelsOrigR = IntArray(_bitmap.height * _bitmap.width)
-        _pixelsOrigG = IntArray(_bitmap.height * _bitmap.width)
-        _pixelsOrigB = IntArray(_bitmap.height * _bitmap.width)
-        _bitmap.getPixels(pixelsOrig, 0, _bitmap.width, 0, 0, _bitmap.width, _bitmap.height)
-        _pixelsAltered = pixelsOrig.copyOf()
-        for (i in 0..pixelsOrig.size - 1) {
-            _pixelsOrigR[i] = pixelsOrig[i] shr 16 and 0xff
-            _pixelsOrigG[i] = pixelsOrig[i] shr 8 and 0xff
-            _pixelsOrigB[i] = pixelsOrig[i] and 0xff
-        }
+        val bitmap = BitmapFactory.decodeResource(resources, R.drawable.chariot)
+        _imageData = ImageData(bitmap)
         alterBitmap()
 
     }
 
-    private fun alterBitmap() {
-        val valueMap = buildColorMap()
-        for (i in 0.._pixelsAltered.size - 1) {
-            _pixelsAltered[i] = (0xff000000.toInt()
-                    or (valueMap[_pixelsOrigR[i]] shl 16)
-                    or (valueMap[_pixelsOrigG[i]] shl 8)
-                    or valueMap[_pixelsOrigB[i]])
 
-        }
 
-        _bitmapAltered.setPixels(_pixelsAltered, 0, _bitmapAltered.width, 0, 0, _bitmapAltered.width, _bitmapAltered.height)
-    }
 
-    private fun buildColorMap(): IntArray {
-        val valueMap = IntArray(256)
-        val controlPoints = getControlPoints(_points)
-        val curvePoints = getCurvePoints(_points, controlPoints)
-
-        var xInt = 0
-        for (i in 1..curvePoints.size - 1) {
-            val (x, y) = curvePoints[i] * 255 / 1000
-            val (x0, y0) = curvePoints[i - 1] * 255 / 1000
-
-            while (xInt <= x.toInt()) {
-                if (x == x0)
-                    valueMap[xInt] = 255 - y0.toInt().restrict(0, 255)
-                else
-                    valueMap[xInt] = 255 - (y0 + (y - y0) * (xInt - x0) / (x - x0)).toInt().restrict(0, 255)
-                xInt++
-            }
-        }
-        return valueMap
-    }
 
     private fun getCurvePoints(points: List<VectorD>, controlPoints: List<VectorD>): ArrayList<VectorD> {
         val curvePoints = ArrayList<VectorD>()
@@ -146,13 +150,15 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
-        if (_scale == null)
+        if (_scale == null) {
             return
+        }
 
+        val bitmap = _imageData.bitmapAltered
         canvas!!.drawBitmap(
-                _bitmapAltered,
-                Rect(0, 0, _bitmapAltered.width, _bitmapAltered.height),
-                Rect(100, 100, _width!! - 100, _bitmapAltered.height * (_width!! - 200) / _bitmapAltered.width),
+                bitmap,
+                Rect(0, 0, bitmap.width, bitmap.height),
+                Rect(100, 100, _width!! - 100, bitmap.height * (_width!! - 200) / bitmap.width),
                 _paint)
 
         canvas.scale(_scale!!, _scale!!)
@@ -242,6 +248,14 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
     }
 
+    private fun alterBitmap() {
+        val controlPoints = getControlPoints(_points)
+        val curvePoints = getCurvePoints(_points, controlPoints)
+
+        _imageData.alterBitmap(curvePoints)
+
+    }
+
     private fun findPointOnCurve(x: Float, y: Float): VectorD? {
         val controlPoints = getControlPoints(_points)
         val curvePoints = getCurvePoints(_points, controlPoints)
@@ -263,8 +277,13 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         val otherIndex = if (closestIndex == 0) 1 else closestIndex - 1
 
         val vDir = (curvePoints[closestIndex] - curvePoints[otherIndex]).normalize()
-        val vPoint = vDir * (clickPoint - curvePoints[closestIndex]).dot(vDir)
-        return curvePoints[closestIndex] + vPoint
+        val vPoint = curvePoints[closestIndex] + vDir * (clickPoint - curvePoints[closestIndex]).dot(vDir)
+
+        if(vPoint.x<=0 || vPoint.y>=1000)
+            return null
+
+
+        return VectorD(vPoint.x, vPoint.y.restrict(0.0, 1000.0))
     }
 
     private fun getPointNumber(x: Float, y: Float): Int {
@@ -329,6 +348,14 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         val vp1 = vp * (v1.x * vp.x / _k)
         val vp2 = vp * (v2.x * vp.x / _k)
         return Pair(p1 + vp1, p1 + vp2)
+    }
+
+    fun setImage(bitmap: Bitmap) {
+        _imageData = ImageData(bitmap)
+        alterBitmap()
+        //Log.d("w", _imageData.bitmapAltered.width.toString())
+        //Log.d("h", _imageData.bitmapAltered.height.toString())
+        invalidate()
     }
 
 
