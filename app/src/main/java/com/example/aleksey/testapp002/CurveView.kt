@@ -11,7 +11,7 @@ import java.util.*
 
 
 internal class CurveView(context: Context, attrs: AttributeSet) : View(context, attrs) {
-    val _k = 2
+    val _k = 3
     val _pointRadius = 30F
     val _points = arrayListOf(
             VectorD(0, 1000),
