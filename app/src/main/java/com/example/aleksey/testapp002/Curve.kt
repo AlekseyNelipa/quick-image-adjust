@@ -1,6 +1,5 @@
 package com.example.aleksey.testapp002
 
-import android.util.Log
 import java.util.*
 
 class Curve {
@@ -13,13 +12,12 @@ class Curve {
             VectorD(max, 0)
     )
     val points: ArrayList<VectorD>
-    var controlPoints: List<VectorD>
-    var curvePoints: List<VectorD>
+    lateinit var controlPoints: List<VectorD>
+    lateinit var curvePoints: List<VectorD>
 
     init {
         points = ArrayList(defaultPoints)
-        controlPoints = getAllControlPoints()
-        curvePoints = getCurvePoints()
+        recalculateCurvePoints()
     }
 
     fun reset() {

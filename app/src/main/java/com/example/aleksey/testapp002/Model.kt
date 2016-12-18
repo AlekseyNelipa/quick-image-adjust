@@ -5,7 +5,7 @@ import android.databinding.Bindable
 
 enum class EditMode { Move, Add, Remove }
 
-public class Model : BaseObservable() {
+class Model : BaseObservable() {
     @Bindable
     var mode: EditMode = EditMode.Move
         set(mode) {

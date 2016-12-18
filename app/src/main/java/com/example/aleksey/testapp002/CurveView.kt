@@ -1,6 +1,8 @@
 package com.example.aleksey.testapp002
 
 import android.content.Context
+import android.databinding.Observable
+import android.databinding.Observable.OnPropertyChangedCallback
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -29,11 +31,18 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
 
     init {
-        if(isInEditMode) {
+
+
+        if (isInEditMode) {
             _model = Model()
-        }
-        else {
+        } else {
             _model = (context as MainActivity)._model
+            _model.addOnPropertyChangedCallback(object : OnPropertyChangedCallback() {
+                override fun onPropertyChanged(p0: Observable?, propertyId: Int) {
+                    if(propertyId == BR.preview)
+                        invalidate()
+                }
+            })
         }
         _curve = Curve()
 
@@ -62,7 +71,10 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
             return
         }
 
-        val bitmap = _imageData.bitmapAltered
+        val bitmap = when {
+            _model.preview -> _imageData.bitmapAltered
+            else -> _imageData.bitmap
+        }
         canvas!!.drawBitmap(
                 bitmap,
                 Rect(0, 0, bitmap.width, bitmap.height),
@@ -96,7 +108,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (_scale == null || event==null)
+        if (_scale == null || event == null)
             return false
 
         val x = event.x / _scale!!
