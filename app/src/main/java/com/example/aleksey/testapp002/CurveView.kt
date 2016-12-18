@@ -69,16 +69,16 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         val path = createPath(_curve.curvePoints)
 
         canvas.drawPath(path, _paint)
-        for (point in _curve.points) {
-            canvas.drawCircle(point.x.toFloat(), point.y.toFloat(), _pointRadius, _paint)
+        for ((x, y) in _curve.points) {
+            canvas.drawCircle(x.toFloat(), y.toFloat(), _pointRadius, _paint)
         }
         if (_selectedIndex != -1) {
             val point = _curve.points[_selectedIndex]
             canvas.drawCircle(point.x.toFloat(), point.y.toFloat(), 30F, _paintFill)
         }
 
-        for (point in _curve.controlPoints) {
-            canvas.drawCircle(point.x.toFloat(), point.y.toFloat(), 10F, _paintControlPoint)
+        for ((x, y) in _curve.controlPoints) {
+            canvas.drawCircle(x.toFloat(), y.toFloat(), 10F, _paintControlPoint)
         }
     }
 
@@ -176,7 +176,8 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
         path.moveTo(curvePoints[0].x.toFloat(), curvePoints[0].y.toFloat())
         for (i in 1..curvePoints.size - 1) {
-            path.lineTo(curvePoints[i].x.toFloat(), curvePoints[i].y.toFloat())
+            val (x, y) = curvePoints[i]
+            path.lineTo(x.toFloat(), y.toFloat())
         }
 
         return path
