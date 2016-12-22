@@ -3,12 +3,10 @@ package com.example.aleksey.quickimageadjust
 import android.app.Activity
 import android.content.Intent
 import android.databinding.DataBindingUtil
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.View
 import com.example.aleksey.quickimageadjust.databinding.ActivityMainBinding
 
@@ -39,7 +37,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle?) {
         outState?.putSerializable("CURVE_KEY", _model.curve.points)
-        outState?.putSerializable("IMAGE_URI", _model.imageUri?.toString())
+        if(_model.imageUri!=null)
+            outState?.putSerializable("IMAGE_URI", _model.imageUri!!.toString())
 
         super.onSaveInstanceState(outState)
     }
@@ -50,10 +49,11 @@ class MainActivity : AppCompatActivity() {
         startActivityForResult(intent, 0)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode==0 && resultCode == Activity.RESULT_OK) {
+        if (requestCode==0 && resultCode == Activity.RESULT_OK && data!=null) {
+            _model.imageUri = data.data
             loadImage(data.data)
 
             val curveView = findViewById(R.id.surface_view) as CurveView
@@ -64,8 +64,6 @@ class MainActivity : AppCompatActivity() {
     private fun loadImage(targetUri: Uri) {
         val bitmap = BitmapFactory.decodeStream(contentResolver.openInputStream(targetUri))
         _model.imageData = ImageData(bitmap)
-        _model.imageUri = targetUri
-
     }
 
     fun onReset(view: View) {
