@@ -5,7 +5,7 @@ android {
     compileSdkVersion 25
     buildToolsVersion "24.0.3"
     defaultConfig {
-        applicationId "com.example.aleksey.testapp002"
+        applicationId "com.example.aleksey.quickimageadjust"
         minSdkVersion 15
         targetSdkVersion 24
         versionCode 1

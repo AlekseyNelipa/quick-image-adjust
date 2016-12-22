@@ -2,8 +2,8 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android">
     <data>
         <import type="android.view.View" />
-        <import type="com.example.aleksey.testapp002.EditMode" />
-        <variable name="model" type="com.example.aleksey.testapp002.Model"/>
+        <import type="com.example.aleksey.quickimageadjust.EditMode" />
+        <variable name="model" type="com.example.aleksey.quickimageadjust.Model"/>
     </data>
 
 <RelativeLayout
@@ -14,7 +14,7 @@
 
 
 
-    <com.example.aleksey.testapp002.CurveView
+    <com.example.aleksey.quickimageadjust.CurveView
         android:id="@+id/surface_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />

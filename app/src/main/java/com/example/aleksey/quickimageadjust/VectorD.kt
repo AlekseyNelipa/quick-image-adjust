@@ -1,4 +1,4 @@
-package com.example.aleksey.testapp002
+package com.example.aleksey.quickimageadjust
 
 import android.graphics.PointF
 

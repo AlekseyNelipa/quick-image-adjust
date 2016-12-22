@@ -1,4 +1,4 @@
-package com.example.aleksey.testapp002
+package com.example.aleksey.quickimageadjust
 
 import android.app.Activity
 import android.content.Intent
@@ -8,7 +8,7 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
-import com.example.aleksey.testapp002.databinding.ActivityMainBinding
+import com.example.aleksey.quickimageadjust.databinding.ActivityMainBinding
 
 
 class MainActivity : AppCompatActivity() {
