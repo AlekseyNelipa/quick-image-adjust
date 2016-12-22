@@ -5,8 +5,10 @@ import android.content.Intent
 import android.databinding.DataBindingUtil
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import com.example.aleksey.quickimageadjust.databinding.ActivityMainBinding
 
@@ -20,13 +22,28 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if(savedInstanceState!=null) {
+            _model.curve.reset(savedInstanceState.getSerializable("CURVE_KEY") as List<VectorD>)
+            val uriStr = savedInstanceState.getSerializable("IMAGE_URI") as String?
+            if(uriStr!=null)
+                loadImage(Uri.parse(uriStr))
+        }
         setContentView(R.layout.activity_main)
         val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         binding.model = _model
-        //val curveView = findViewById(R.id.surface_view) as CurveView
-        //curveView.model = _model
+        val curveView = findViewById(R.id.surface_view) as CurveView
+        curveView.alterBitmap()
 
     }
+
+
+    override fun onSaveInstanceState(outState: Bundle?) {
+        outState?.putSerializable("CURVE_KEY", _model.curve.points)
+        outState?.putSerializable("IMAGE_URI", _model.imageUri?.toString())
+
+        super.onSaveInstanceState(outState)
+    }
+
 
     fun openImage(view: View) {
         val intent = Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
@@ -37,15 +54,18 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode==0 && resultCode == Activity.RESULT_OK) {
-            val targetUri = data.data
-            val bitmap: Bitmap
-
-            bitmap = BitmapFactory.decodeStream(contentResolver.openInputStream(targetUri))
+            loadImage(data.data)
 
             val curveView = findViewById(R.id.surface_view) as CurveView
-            curveView.setImage(bitmap)
-
+            curveView.reset()
         }
+    }
+
+    private fun loadImage(targetUri: Uri) {
+        val bitmap = BitmapFactory.decodeStream(contentResolver.openInputStream(targetUri))
+        _model.imageData = ImageData(bitmap)
+        _model.imageUri = targetUri
+
     }
 
     fun onReset(view: View) {

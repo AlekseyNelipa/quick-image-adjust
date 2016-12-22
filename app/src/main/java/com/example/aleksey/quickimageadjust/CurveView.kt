@@ -16,14 +16,11 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     private val _paint: Paint
     private val _paintControlPoint: Paint
     private val _paintFill: Paint
-    private var _imageData: ImageData
 
 
     private var _selectedIndex: Int = -1
 
     private val _model: Model
-
-    private val _curve: Curve
 
     private var _width: Int? = null
     private var _height: Int? = null
@@ -39,12 +36,11 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
             _model = (context as MainActivity)._model
             _model.addOnPropertyChangedCallback(object : OnPropertyChangedCallback() {
                 override fun onPropertyChanged(p0: Observable?, propertyId: Int) {
-                    if(propertyId == BR.preview)
+                    if (propertyId == BR.preview)
                         invalidate()
                 }
             })
         }
-        _curve = Curve()
 
         _paint = Paint()
         _paint.style = Paint.Style.STROKE
@@ -57,9 +53,6 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         _paintControlPoint = Paint(_paint)
         _paintControlPoint.strokeWidth = 3F
 
-        val bitmap = BitmapFactory.decodeResource(resources, R.drawable.chariot)
-        _imageData = ImageData(bitmap)
-        alterBitmap()
 
     }
 
@@ -67,34 +60,36 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
-        if (_scale == null) {
+        if (_scale == null || canvas == null) {
             return
         }
 
-        val bitmap = when {
-            _model.preview -> _imageData.bitmapAltered
-            else -> _imageData.bitmap
+        if (_model.imageData != null) {
+            val bitmap = when {
+                _model.preview -> _model.imageData!!.bitmapAltered
+                else -> _model.imageData!!.bitmap
+            }
+            canvas.drawBitmap(
+                    bitmap,
+                    Rect(0, 0, bitmap.width, bitmap.height),
+                    Rect(100, 100, _width!! - 100, bitmap.height * (_width!! - 200) / bitmap.width),
+                    _paint)
         }
-        canvas!!.drawBitmap(
-                bitmap,
-                Rect(0, 0, bitmap.width, bitmap.height),
-                Rect(100, 100, _width!! - 100, bitmap.height * (_width!! - 200) / bitmap.width),
-                _paint)
 
         canvas.scale(_scale!!, _scale!!)
 
-        val path = createPath(_curve.curvePoints)
+        val path = createPath(_model.curve.curvePoints)
 
         canvas.drawPath(path, _paint)
-        for ((x, y) in _curve.points) {
+        for ((x, y) in _model.curve.points) {
             canvas.drawCircle(x.toFloat(), y.toFloat(), _pointRadius, _paint)
         }
         if (_selectedIndex != -1) {
-            val point = _curve.points[_selectedIndex]
+            val point = _model.curve.points[_selectedIndex]
             canvas.drawCircle(point.x.toFloat(), point.y.toFloat(), 30F, _paintFill)
         }
 
-        for ((x, y) in _curve.controlPoints) {
+        for ((x, y) in _model.curve.controlPoints) {
             canvas.drawCircle(x.toFloat(), y.toFloat(), 10F, _paintControlPoint)
         }
     }
@@ -103,7 +98,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         _width = w
         _height = h
-        _scale = Math.min(w, h) / _curve.max.toFloat()
+        _scale = Math.min(w, h) / _model.curve.max.toFloat()
         super.onSizeChanged(w, h, oldw, oldh)
     }
 
@@ -118,25 +113,23 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
             MotionEvent.ACTION_DOWN -> {
                 when (_model.mode) {
                     EditMode.Add -> {
-                        val newPoint = _curve.findPointOnCurve(x, y)
+                        val newPoint = _model.curve.findPointOnCurve(x, y)
                         if (newPoint != null) {
 
-                            _curve.insertPoint(newPoint)
+                            _model.curve.insertPoint(newPoint)
 
                             _model.mode = EditMode.Move
                             alterBitmap()
-                            invalidate()
                         }
                     }
                     EditMode.Remove -> {
                         val index = getPointNumber(x, y)
-                        if (index > 0 && index < _curve.points.size - 1) {
+                        if (index > 0 && index < _model.curve.points.size - 1) {
                             if (_selectedIndex == index)
                                 _selectedIndex = -1
-                            _curve.removePoint(index)
+                            _model.curve.removePoint(index)
                             _model.mode = EditMode.Move
                             alterBitmap()
-                            invalidate()
                         }
                     }
                     EditMode.Move -> {
@@ -150,20 +143,19 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
                 if (_selectedIndex != -1) {
                     val xNew = when (_selectedIndex) {
                         0 -> 0.0
-                        _curve.points.size - 1 -> _curve.max
+                        _model.curve.points.size - 1 -> _model.curve.max
                         else -> x.toDouble().restrict(
-                                _curve.points[_selectedIndex - 1].x + 1,
-                                _curve.points[_selectedIndex + 1].x - 1)
+                                _model.curve.points[_selectedIndex - 1].x + 1,
+                                _model.curve.points[_selectedIndex + 1].x - 1)
                     }
-                    val yNew = y.toDouble().restrict(0.0, _curve.max)
-                    _curve.movePoint(_selectedIndex, VectorD(xNew, yNew))
+                    val yNew = y.toDouble().restrict(0.0, _model.curve.max)
+                    _model.curve.movePoint(_selectedIndex, VectorD(xNew, yNew))
                     invalidate()
                 }
             }
             MotionEvent.ACTION_UP -> {
                 _selectedIndex = -1
                 alterBitmap()
-                invalidate()
             }
         }
 
@@ -172,15 +164,15 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
     }
 
-    private fun alterBitmap() {
-        _imageData.alterBitmap(_curve.curvePoints, _curve.max)
-
+    fun alterBitmap() {
+        _model.imageData?.alterBitmap(_model.curve.curvePoints, _model.curve.max)
+        invalidate()
     }
 
 
     private fun getPointNumber(x: Float, y: Float): Int {
         val radiusSq = _pointRadius * _pointRadius
-        return _curve.points.indexOfFirst {
+        return _model.curve.points.indexOfFirst {
             val dx = it.x - x
             val dy = it.y - y
             dx * dx < radiusSq && dy * dy < radiusSq
@@ -201,16 +193,9 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
     }
 
 
-    fun setImage(bitmap: Bitmap) {
-        _imageData = ImageData(bitmap)
-        alterBitmap()
-        invalidate()
-    }
-
     fun reset() {
-        _curve.reset()
+        _model.curve.reset()
         alterBitmap()
-        invalidate()
     }
 
 

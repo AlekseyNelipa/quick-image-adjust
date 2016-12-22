@@ -2,7 +2,7 @@ package com.example.aleksey.quickimageadjust
 
 import android.graphics.Bitmap
 
-internal class ImageData(val bitmap: Bitmap) {
+class ImageData(val bitmap: Bitmap) {
     val bitmapAltered: Bitmap
     private val pixelsOrigR: IntArray
     private val pixelsOrigG: IntArray

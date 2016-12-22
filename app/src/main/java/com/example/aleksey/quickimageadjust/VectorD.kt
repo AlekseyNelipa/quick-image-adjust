@@ -1,10 +1,10 @@
 package com.example.aleksey.quickimageadjust
 
 import android.graphics.PointF
+import java.io.Serializable
 
 
-
-data class VectorD(val x: Double, val y: Double) {
+data class VectorD(val x: Double, val y: Double) : Serializable {
 
     constructor(x: Number, y: Number) : this(x.toDouble(), y.toDouble())
 

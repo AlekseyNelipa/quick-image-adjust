@@ -21,8 +21,12 @@ class Curve {
     }
 
     fun reset() {
+        reset(defaultPoints)
+    }
+
+    fun reset(newPoints: List<VectorD>) {
         points.clear()
-        points.addAll(defaultPoints)
+        points.addAll(newPoints)
         recalculateCurvePoints()
     }
 
