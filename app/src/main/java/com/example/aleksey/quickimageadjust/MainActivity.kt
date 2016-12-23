@@ -21,10 +21,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if(savedInstanceState!=null) {
-            _model.curve.reset(savedInstanceState.getSerializable("CURVE_KEY") as List<VectorD>)
-            val uriStr = savedInstanceState.getSerializable("IMAGE_URI") as String?
-            if(uriStr!=null)
-                loadImage(Uri.parse(uriStr))
+            _model.curve.reset(savedInstanceState.getParcelableArrayList<VectorD>("CURVE_KEY"))
+            _model.imageUri = savedInstanceState.getParcelable<Uri>("IMAGE_URI")
+            if(_model.imageUri!=null)
+                loadImage(_model.imageUri!!)
         }
         setContentView(R.layout.activity_main)
         val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
@@ -36,9 +36,9 @@ class MainActivity : AppCompatActivity() {
 
 
     override fun onSaveInstanceState(outState: Bundle?) {
-        outState?.putSerializable("CURVE_KEY", _model.curve.points)
+        outState?.putParcelableArrayList("CURVE_KEY", _model.curve.points)
         if(_model.imageUri!=null)
-            outState?.putSerializable("IMAGE_URI", _model.imageUri!!.toString())
+            outState?.putParcelable("IMAGE_URI", _model.imageUri)
 
         super.onSaveInstanceState(outState)
     }

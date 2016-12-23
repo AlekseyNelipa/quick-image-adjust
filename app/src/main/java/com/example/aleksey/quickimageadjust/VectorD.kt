@@ -1,12 +1,36 @@
 package com.example.aleksey.quickimageadjust
 
 import android.graphics.PointF
-import java.io.Serializable
+import android.os.Parcel
+import android.os.Parcelable
 
 
-data class VectorD(val x: Double, val y: Double) : Serializable {
+data class VectorD(val x: Double, val y: Double) : Parcelable {
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    override fun writeToParcel(parcel: Parcel, p1: Int) {
+        parcel.writeDouble(x)
+        parcel.writeDouble(y)
+    }
 
     constructor(x: Number, y: Number) : this(x.toDouble(), y.toDouble())
+
+    companion object {
+        val CREATOR = object : Parcelable.Creator<VectorD> {
+
+            override fun createFromParcel(parcel: Parcel): VectorD {
+                val x = parcel.readDouble()
+                val y = parcel.readDouble()
+                return VectorD(x, y)
+            }
+
+            override fun newArray(size: Int): Array<VectorD?> {
+                return arrayOfNulls<VectorD?>(size)
+            }
+        }
+    }
 
     fun normalize(): VectorD {
         val len = this.length()

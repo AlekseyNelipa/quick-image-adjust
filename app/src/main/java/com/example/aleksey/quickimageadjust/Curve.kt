@@ -7,8 +7,8 @@ class Curve {
     val max = 1000.0
     val defaultPoints = arrayListOf(
             VectorD(0, max),
-            VectorD(max/3, 2*max/3),
-            VectorD(2*max/3, max/3),
+            VectorD(max / 3, 2 * max / 3),
+            VectorD(2 * max / 3, max / 3),
             VectorD(max, 0)
     )
     val points: ArrayList<VectorD>
@@ -154,7 +154,7 @@ class Curve {
         val v2 = p2 - p1
         val vDir = v1.normalize() + v2.normalize()
         val vp = when {
-            vDir.lengthSquared()>0.0001 -> vDir.onePerpendicular()
+            vDir.lengthSquared() > 0.0001 -> vDir.onePerpendicular()
             else -> v1
         }
         val vp1 = vp * (v1.x / (_k * vp.x))
