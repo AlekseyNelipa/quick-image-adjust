@@ -21,6 +21,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if(savedInstanceState!=null) {
+            _model.preview = savedInstanceState.getBoolean("PREVIEW_KEY")
+            _model.mode = EditMode.valueOf(savedInstanceState.getString("MODEL_KEY"))
             _model.curve.reset(savedInstanceState.getParcelableArrayList<VectorD>("CURVE_KEY"))
             _model.imageUri = savedInstanceState.getParcelable<Uri>("IMAGE_URI")
             if(_model.imageUri!=null)
@@ -36,6 +38,8 @@ class MainActivity : AppCompatActivity() {
 
 
     override fun onSaveInstanceState(outState: Bundle?) {
+        outState?.putBoolean("PREVIEW_KEY", _model.preview)
+        outState?.putString("MODEL_KEY", _model.mode.name)
         outState?.putParcelableArrayList("CURVE_KEY", _model.curve.points)
         if(_model.imageUri!=null)
             outState?.putParcelable("IMAGE_URI", _model.imageUri)
