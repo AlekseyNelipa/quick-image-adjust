@@ -5,13 +5,14 @@ import android.databinding.Observable
 import android.databinding.Observable.OnPropertyChangedCallback
 import android.graphics.*
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 
 
 internal class CurveView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
-`    private val _pointRadius = 50F
+    private val _pointRadius = 50F
 
     private val _paint: Paint
     private val _paintControlPoint: Paint
