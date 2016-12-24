@@ -69,13 +69,10 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
                 _model.preview -> _model.imageData!!.bitmapAltered
                 else -> _model.imageData!!.bitmap
             }
-            val imageScale = Math.min(_width!!.toFloat()/bitmap.width, _height!!.toFloat()/bitmap.height)
-            val xMargin = (_width!! - bitmap.width * imageScale).toInt() /2
-            val yMargin = (_height!! - bitmap.height * imageScale).toInt() /2
             canvas.drawBitmap(
                     bitmap,
                     Rect(0, 0, bitmap.width, bitmap.height),
-                    Rect(xMargin, yMargin, _width!!-xMargin, _height!!-yMargin),
+                    getImageRect(bitmap, _width!!, _height!!),
                     _paint)
         }
 
@@ -95,6 +92,15 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         for ((x, y) in _model.curve.controlPoints) {
             canvas.drawCircle(x.toFloat(), y.toFloat(), 10F, _paintControlPoint)
         }
+    }
+
+
+
+    fun getImageRect(bitmap: Bitmap, canvasWidth: Int, canvasHeight: Int): Rect {
+        val imageScale = Math.min(canvasWidth.toFloat() / bitmap.width, canvasWidth.toFloat() / bitmap.height)
+        val xMargin = (canvasWidth - bitmap.width * imageScale).toInt() / 2
+        val yMargin = (canvasHeight - bitmap.height * imageScale).toInt() / 2
+        return Rect(xMargin, yMargin, canvasWidth - xMargin, canvasHeight - yMargin)
     }
 
 
