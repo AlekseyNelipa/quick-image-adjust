@@ -13,17 +13,12 @@
     android:id="@+id/rect">
 
 
-
-    <com.example.aleksey.quickimageadjust.CurveView
-        android:id="@+id/surface_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/load_image"
-        android:onClick="openImage"/>
+        android:onClick="openImage"
+        android:id="@+id/load_image_button"/>
 
 
 
@@ -74,10 +69,20 @@
         android:text="@string/preview"
         android:checked="@={model.preview}"
         android:layout_above="@id/button_layout"
+        android:id="@+id/preview_checkbox"
         />
 
 
 
+
+
+    <com.example.aleksey.quickimageadjust.CurveView
+        android:id="@+id/surface_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/preview_checkbox"
+        android:layout_below="@id/load_image_button"
+        />
 
 
 
