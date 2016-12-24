@@ -11,7 +11,7 @@ import android.view.View
 
 internal class CurveView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
-    private val _pointRadius = 30F
+`    private val _pointRadius = 50F
 
     private val _paint: Paint
     private val _paintControlPoint: Paint
@@ -29,7 +29,6 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
     init {
 
-
         if (isInEditMode) {
             _model = Model()
         } else {
@@ -45,7 +44,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         _paint = Paint()
         _paint.style = Paint.Style.STROKE
         _paint.color = Color.RED
-        _paint.strokeWidth = 5F
+        _paint.strokeWidth = 10F
 
         _paintFill = Paint(_paint)
         _paintFill.style = Paint.Style.FILL
@@ -69,10 +68,13 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
                 _model.preview -> _model.imageData!!.bitmapAltered
                 else -> _model.imageData!!.bitmap
             }
+            val imageScale = Math.min(_width!!.toFloat()/bitmap.width, _height!!.toFloat()/bitmap.height)
+            val xMargin = (_width!! - bitmap.width * imageScale).toInt() /2
+            val yMargin = (_height!! - bitmap.height * imageScale).toInt() /2
             canvas.drawBitmap(
                     bitmap,
                     Rect(0, 0, bitmap.width, bitmap.height),
-                    Rect(100, 100, _width!! - 100, bitmap.height * (_width!! - 200) / bitmap.width),
+                    Rect(xMargin, yMargin, _width!!-xMargin, _height!!-yMargin),
                     _paint)
         }
 
