@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <import type="android.view.View" />
+        <import type="com.example.aleksey.quickimageadjust.EditMode" />
+        <variable name="model" type="com.example.aleksey.quickimageadjust.Model"/>
+    </data>
+
+<RelativeLayout
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/rect">
+
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/load_image"
+        android:onClick="openImage"
+        android:id="@+id/load_image_button"/>
+
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/button_layout"
+        >
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/add_point"
+            android:id="@+id/add_point_button"
+            android:onClick='@{()->model.setMode(EditMode.Add)}'
+            android:visibility='@{model.mode==EditMode.Move ? View.VISIBLE : View.GONE}'/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/remove_point"
+            android:id="@+id/remove_point_button"
+            android:onClick='@{()->model.setMode(EditMode.Remove)}'
+            android:visibility='@{model.mode==EditMode.Move ? View.VISIBLE : View.GONE}'/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/reset"
+            android:id="@+id/reset_button"
+            android:onClick='onReset'
+            android:visibility='@{model.mode==EditMode.Move ? View.VISIBLE : View.GONE}'/>
+
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cancel_current"
+            android:id="@+id/cancel_button"
+            android:onClick='@{()->model.setMode(EditMode.Move)}'
+            android:visibility='@{model.mode!=EditMode.Move ? View.VISIBLE : View.GONE}'/>
+
+    </LinearLayout>
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/preview"
+        android:checked="@={model.preview}"
+        android:layout_above="@id/button_layout"
+        android:id="@+id/preview_checkbox"
+        />
+
+
+
+
+
+    <com.example.aleksey.quickimageadjust.CurveView
+        android:id="@+id/surface_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/preview_checkbox"
+        android:layout_below="@id/load_image_button"
+        />
+
+
+
+</RelativeLayout>
+</layout>
