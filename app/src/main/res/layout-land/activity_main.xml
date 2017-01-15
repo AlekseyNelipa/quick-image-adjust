@@ -13,21 +13,33 @@
     android:id="@+id/rect">
 
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/load_image"
-        android:onClick="openImage"
-        android:id="@+id/load_image_button"/>
+
 
 
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
+        android:orientation="vertical"
         android:id="@+id/button_layout"
         >
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/load_image"
+            android:onClick="openImage"
+            android:id="@+id/load_image_button"/>
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/preview"
+            android:checked="@={model.preview}"
+            android:layout_above="@id/button_layout"
+            android:id="@+id/preview_checkbox"
+            />
+
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -63,14 +75,7 @@
 
     </LinearLayout>
 
-    <CheckBox
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/preview"
-        android:checked="@={model.preview}"
-        android:layout_above="@id/button_layout"
-        android:id="@+id/preview_checkbox"
-        />
+
 
 
 
@@ -80,8 +85,7 @@
         android:id="@+id/surface_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@id/preview_checkbox"
-        android:layout_below="@id/load_image_button"
+        android:layout_toLeftOf="@id/button_layout"
         />
 
 
