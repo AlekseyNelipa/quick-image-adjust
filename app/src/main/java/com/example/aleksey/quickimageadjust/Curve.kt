@@ -38,7 +38,7 @@ class Curve {
 
     fun insertPoint(newPoint: VectorD) {
         val index = points.indexOfFirst { it.x > newPoint.x }
-        if (index <= 0 || index >= points.size - 1)
+        if (index <= 0 || index > points.size - 1)
             return
         points.add(index, newPoint)
         recalculateCurvePoints()
