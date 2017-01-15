@@ -96,7 +96,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
 
 
     fun getImageRect(bitmap: Bitmap, canvasWidth: Int, canvasHeight: Int): Rect {
-        val imageScale = Math.min(canvasWidth.toFloat() / bitmap.width, canvasWidth.toFloat() / bitmap.height)
+        val imageScale = Math.min(canvasWidth.toFloat() / bitmap.width, canvasHeight.toFloat() / bitmap.height)
         val xMargin = (canvasWidth - bitmap.width * imageScale).toInt() / 2
         val yMargin = (canvasHeight - bitmap.height * imageScale).toInt() / 2
         return Rect(xMargin, yMargin, canvasWidth - xMargin, canvasHeight - yMargin)
