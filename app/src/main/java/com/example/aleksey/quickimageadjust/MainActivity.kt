@@ -12,11 +12,7 @@ import com.example.aleksey.quickimageadjust.databinding.ActivityMainBinding
 
 
 class MainActivity : AppCompatActivity() {
-    val _model: Model
-
-    init {
-        _model = Model()
-    }
+    val _model: Model = Model()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

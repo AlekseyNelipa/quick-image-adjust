@@ -3,18 +3,14 @@ package com.example.aleksey.quickimageadjust
 import android.graphics.Bitmap
 
 class ImageData(val bitmap: Bitmap) {
-    val bitmapAltered: Bitmap
-    private val pixelsOrigR: IntArray
-    private val pixelsOrigG: IntArray
-    private val pixelsOrigB: IntArray
+    val bitmapAltered: Bitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+    private val pixelsOrigR: IntArray = IntArray(bitmap.height * bitmap.width)
+    private val pixelsOrigG: IntArray = IntArray(bitmap.height * bitmap.width)
+    private val pixelsOrigB: IntArray = IntArray(bitmap.height * bitmap.width)
     private val pixelsAltered: IntArray
 
     init {
-        bitmapAltered = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
         val pixelsOrig = IntArray(bitmap.height * bitmap.width)
-        pixelsOrigR = IntArray(bitmap.height * bitmap.width)
-        pixelsOrigG = IntArray(bitmap.height * bitmap.width)
-        pixelsOrigB = IntArray(bitmap.height * bitmap.width)
         bitmap.getPixels(pixelsOrig, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
         pixelsAltered = pixelsOrig.copyOf()
         for (i in 0..pixelsOrig.size - 1) {
