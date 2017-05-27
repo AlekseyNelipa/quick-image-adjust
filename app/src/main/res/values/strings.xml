@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Quick Image Adjust</string>
     <string name="load_image">Load Image</string>
+    <string name="save_image">Save Image</string>
     <string name="preview">Preview Changes</string>
     <string name="add_point">Add Point</string>
     <string name="remove_point">Remove Point</string>

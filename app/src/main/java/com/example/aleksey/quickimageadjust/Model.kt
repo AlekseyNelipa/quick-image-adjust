@@ -19,10 +19,21 @@ class Model : BaseObservable() {
         set(preview) {
             field = preview
             notifyPropertyChanged(BR.preview)
+            notifyPropertyChanged(BR.canSave)
         }
+
+    @Bindable
+    fun getCanSave() : Boolean {
+        return preview && imageData!=null
+    }
 
     val curve = Curve()
 
     var imageData: ImageData? = null
+        set(imageData) {
+            field = imageData
+            notifyPropertyChanged(BR.canSave)
+        }
+
     var imageUri: Uri? = null
 }
