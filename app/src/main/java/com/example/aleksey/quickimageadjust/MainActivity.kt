@@ -3,23 +3,21 @@ package com.example.aleksey.quickimageadjust
 import android.app.Activity
 import android.content.Intent
 import android.databinding.DataBindingUtil
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
-import android.provider.MediaStore
 import android.support.v7.app.AppCompatActivity
-import android.view.View
-import com.example.aleksey.quickimageadjust.databinding.ActivityMainBinding
-import android.os.Environment.DIRECTORY_PICTURES
-import android.os.Environment.getExternalStoragePublicDirectory
 import android.util.Log
+import android.view.View
+import android.widget.Toast
+import com.example.aleksey.quickimageadjust.databinding.ActivityMainBinding
 import java.io.File
 import java.io.FileOutputStream
-import android.graphics.Bitmap
-import android.support.v4.app.NotificationCompat.getExtras
-import java.io.ByteArrayOutputStream
-import android.R.attr.path
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 const val OPEN_IMAGE_ACTIVITY_ID: Int = 1
@@ -64,23 +62,24 @@ class MainActivity : AppCompatActivity() {
         startActivityForResult(intent, OPEN_IMAGE_ACTIVITY_ID)
     }
 
-    private fun fixMediaDir() {
-        val sdcard = Environment.getExternalStorageDirectory()
-        if (sdcard != null) {
-            val mediaDir = File(sdcard, "DCIM/Camera")
-            if (!mediaDir.exists()) {
-                mediaDir.mkdirs()
-            }
-        }
-    }
 
     fun saveImage(view: View) {
-        fixMediaDir()
+        val file = getNewFile()
 
-        val imageData = _model.imageData
+        try {
+            FileOutputStream(file).use { outputStream ->
+                _model.imageData!!.bitmapAltered.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+                outputStream.flush()
+            }
+            Toast.makeText(applicationContext, "Saved image as ${file.absolutePath}", Toast.LENGTH_SHORT).show();
+        } catch (e: Exception) {
+            Toast.makeText(applicationContext, "Failed to save image! ${e.message}", Toast.LENGTH_LONG).show();
+        }
 
-        if(imageData!=null)
-            MediaStore.Images.Media.insertImage(contentResolver, imageData.bitmapAltered, "test", "test")
+        MediaScannerConnection.scanFile(this, arrayOf(file.absolutePath), null) { path, uri ->
+            Log.d("d", "$path -- $uri")
+            //Toast.makeText(applicationContext, "$path -- $uri", Toast.LENGTH_LONG).show();
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -93,6 +92,7 @@ class MainActivity : AppCompatActivity() {
 
                 val curveView = findViewById<CurveView>(R.id.surface_view)
                 curveView.reset()
+                Toast.makeText(applicationContext, "Loaded ${_model.imageUri}", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -100,6 +100,23 @@ class MainActivity : AppCompatActivity() {
     private fun loadImage(targetUri: Uri) {
         val bitmap = BitmapFactory.decodeStream(contentResolver.openInputStream(targetUri))
         _model.imageData = ImageData(bitmap)
+    }
+
+    private fun getNewFile(): File {
+        val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
+        val saveDir = File(root + "/QuickImageAdjust")
+
+        if (!saveDir.exists()) {
+            saveDir.mkdirs()
+        }
+
+        for (i: Int in 0..1000) {
+            val pattern = if (i == 0) "yyyyMMddHHmmss'.jpg'" else "yyyyMMddHHmmss'.${i}.jpg'"
+            val file = File(saveDir, SimpleDateFormat(pattern, Locale.ROOT).format(Date()))
+            if (!file.exists())
+                return file
+        }
+        throw Exception("Failed to generate new file")
     }
 
     fun onReset(view: View) {
