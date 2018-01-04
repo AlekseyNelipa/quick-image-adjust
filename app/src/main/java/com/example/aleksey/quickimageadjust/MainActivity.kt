@@ -6,12 +6,23 @@ import android.databinding.DataBindingUtil
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import com.example.aleksey.quickimageadjust.databinding.ActivityMainBinding
+import android.os.Environment.DIRECTORY_PICTURES
+import android.os.Environment.getExternalStoragePublicDirectory
+import android.util.Log
+import java.io.File
+import java.io.FileOutputStream
+import android.graphics.Bitmap
+import android.support.v4.app.NotificationCompat.getExtras
+import java.io.ByteArrayOutputStream
+import android.R.attr.path
+
 
 const val OPEN_IMAGE_ACTIVITY_ID: Int = 1
-const val SAVE_IMAGE_ACTIVITY_ID: Int = 2
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,8 +41,8 @@ class MainActivity : AppCompatActivity() {
         }
         setContentView(R.layout.activity_main)
         val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        binding.setModel(_model)
-        val curveView = findViewById(R.id.surface_view) as CurveView
+        binding.model = _model
+        val curveView = findViewById<CurveView>(R.id.surface_view)
         curveView.alterBitmap()
 
     }
@@ -53,9 +64,23 @@ class MainActivity : AppCompatActivity() {
         startActivityForResult(intent, OPEN_IMAGE_ACTIVITY_ID)
     }
 
-    fun initSaveImage(view: View) {
-        val intent = Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        startActivityForResult(intent, SAVE_IMAGE_ACTIVITY_ID)
+    private fun fixMediaDir() {
+        val sdcard = Environment.getExternalStorageDirectory()
+        if (sdcard != null) {
+            val mediaDir = File(sdcard, "DCIM/Camera")
+            if (!mediaDir.exists()) {
+                mediaDir.mkdirs()
+            }
+        }
+    }
+
+    fun saveImage(view: View) {
+        fixMediaDir()
+
+        val imageData = _model.imageData
+
+        if(imageData!=null)
+            MediaStore.Images.Media.insertImage(contentResolver, imageData.bitmapAltered, "test", "test")
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -66,11 +91,9 @@ class MainActivity : AppCompatActivity() {
                 _model.imageUri = data.data
                 loadImage(data.data)
 
-                val curveView = findViewById(R.id.surface_view) as CurveView
+                val curveView = findViewById<CurveView>(R.id.surface_view)
                 curveView.reset()
             }
-        } else if (requestCode == SAVE_IMAGE_ACTIVITY_ID) {
-
         }
     }
 
@@ -80,7 +103,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun onReset(view: View) {
-        val curveView = findViewById(R.id.surface_view) as CurveView
+        val curveView = findViewById<CurveView>(R.id.surface_view)
         curveView.reset()
     }
 }

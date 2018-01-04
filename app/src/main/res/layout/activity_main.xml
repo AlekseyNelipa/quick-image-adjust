@@ -24,7 +24,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/save_image"
-        android:onClick="initSaveImage"
+        android:onClick="saveImage"
+        android:layout_toEndOf="@id/load_image_button"
         android:layout_toRightOf="@id/load_image_button"
         android:id="@+id/save_image_button"
         android:visibility='@{model.canSave ? View.VISIBLE : View.GONE}'/>

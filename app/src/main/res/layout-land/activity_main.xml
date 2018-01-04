@@ -35,7 +35,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/save_image"
-            android:onClick="initSaveImage"
+            android:onClick="saveImage"
             android:id="@+id/save_image_button"
             android:visibility='@{model.canSave ? View.VISIBLE : View.GONE}'/>
 
