@@ -192,7 +192,7 @@ internal class CurveView(context: Context, attrs: AttributeSet) : View(context, 
         val path = Path()
 
         path.moveTo(curvePoints[0].x.toFloat(), curvePoints[0].y.toFloat())
-        for (i in 1..curvePoints.size - 1) {
+        for (i in 1 until curvePoints.size) {
             val (x, y) = curvePoints[i]
             path.lineTo(x.toFloat(), y.toFloat())
         }

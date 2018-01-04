@@ -13,7 +13,7 @@ class ImageData(val bitmap: Bitmap) {
         val pixelsOrig = IntArray(bitmap.height * bitmap.width)
         bitmap.getPixels(pixelsOrig, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
         pixelsAltered = pixelsOrig.copyOf()
-        for (i in 0..pixelsOrig.size - 1) {
+        for (i in 0 until pixelsOrig.size) {
             pixelsOrigR[i] = pixelsOrig[i] shr 16 and 0xff
             pixelsOrigG[i] = pixelsOrig[i] shr 8 and 0xff
             pixelsOrigB[i] = pixelsOrig[i] and 0xff
@@ -22,7 +22,7 @@ class ImageData(val bitmap: Bitmap) {
 
     fun alterBitmap(curvePoints: List<VectorD>, curveMax: Double) {
         val valueMap = buildColorMap(curvePoints, curveMax)
-        for (i in 0..pixelsAltered.size - 1) {
+        for (i in 0 until pixelsAltered.size) {
             pixelsAltered[i] = (0xff000000.toInt()
                     or (valueMap[pixelsOrigR[i]] shl 16)
                     or (valueMap[pixelsOrigG[i]] shl 8)
@@ -38,7 +38,7 @@ class ImageData(val bitmap: Bitmap) {
 
 
         var xInt = 0
-        for (i in 1..curvePoints.size - 1) {
+        for (i in 1 until curvePoints.size) {
             val (x, y) = curvePoints[i] * 255 / curveMax
             val (x0, y0) = curvePoints[i - 1] * 255 / curveMax
 

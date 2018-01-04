@@ -5,7 +5,7 @@ import java.util.*
 class Curve {
     private val _k = 4
     val max = 1000.0
-    val defaultPoints = arrayListOf(
+    private val defaultPoints = arrayListOf(
             VectorD(0, max),
             VectorD(max / 3, 2 * max / 3),
             VectorD(2 * max / 3, max / 3),
@@ -87,7 +87,7 @@ class Curve {
         val curvePoints = ArrayList<VectorD>()
 
         curvePoints.add(points[0])
-        for (i in 1..points.size - 1) {
+        for (i in 1 until points.size) {
             val fx = { t: Double ->
                 (points[i].x * t * t * t
                         + 3 * controlPoints[i * 2 - 1].x * t * t * (1 - t)
